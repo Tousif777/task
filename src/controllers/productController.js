@@ -24,11 +24,16 @@ exports.createSubscriptionProduct = async (req, res) => {
         });
 
         // Return details about the created subscription
-        res.status(200).json({ product, price });
+        res.status(200).json({
+            status: true,
+            message: 'Subscription product created successfully',
+            product,
+            price,
+        });
 
     } catch (error) {
         console.error('Error creating subscription product:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ status: false, error: 'Internal Server Error' });
     }
 };
 
@@ -53,11 +58,15 @@ exports.getAllSubscriptionProducts = async (req, res) => {
         }
 
         // Return the list of products with prices
-        res.status(200).json({ productsWithPrices });
+        res.status(200).json({
+            status: true,
+            message: 'Retrieved all subscription products successfully',
+            productsWithPrices,
+        });
 
     } catch (error) {
         console.error('Error retrieving subscription products:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ status: false, error: 'Internal Server Error' });
     }
 };
 
@@ -80,11 +89,15 @@ exports.deactivateSubscriptionProduct = async (req, res) => {
             active: false,
         });
 
-        res.status(200).json({ success: true, product: updatedProduct, message: 'Product deactivated successfully' });
+        res.status(200).json({
+            status: true,
+            message: 'Product deactivated successfully',
+            product: updatedProduct,
+        });
 
     } catch (error) {
         console.error('Error deactivating product:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ status: false, error: 'Internal Server Error' });
     }
 };
 
@@ -107,43 +120,14 @@ exports.activateSubscriptionProduct = async (req, res) => {
             active: true,
         });
 
-        res.status(200).json({ success: true, product: updatedProduct, message: 'Product activated successfully' });
+        res.status(200).json({
+            status: true,
+            message: 'Product activated successfully',
+            product: updatedProduct,
+        });
 
     } catch (error) {
         console.error('Error activating product:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-
-exports.updateSubscriptionProduct = async (req, res) => {
-    const productId = req.params.productId;
-    const { name, description, images, type, unit_amount, currency, interval, features } = req.body;
-
-    try {
-        const updatedProduct = await stripe.products.update(productId, {
-            name: name || 'Updated Subscription Product',
-            description: description || 'Updated subscription product description',
-            images: images || ['https://example.com/updated-image.jpg'],
-            type: type || 'service',
-            metadata: { features: features || [] },
-        });
-
-        const updatedPrice = await stripe.prices.update(
-            productId,
-            {
-                product: productId,
-                unit_amount: unit_amount || 2000,
-                currency: currency || 'usd',
-                recurring: {
-                    interval: interval || 'year',
-                },
-            }
-        );
-
-        res.status(200).json({ product: updatedProduct, price: updatedPrice });
-
-    } catch (error) {
-        console.error('Error updating product:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ status: false, error: 'Internal Server Error' });
     }
 };

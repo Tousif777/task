@@ -8,8 +8,6 @@ router.get('/get-all-products', subscriptionController.getAllSubscriptionProduct
 
 router.put('/deactivate-product/:productId', subscriptionController.deactivateSubscriptionProduct);
 
-router.put('/update-product/:productId', subscriptionController.updateSubscriptionProduct);
-
 router.put('/activate-product/:productId', subscriptionController.activateSubscriptionProduct);
 
 module.exports = router;
