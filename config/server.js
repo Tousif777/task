@@ -18,14 +18,13 @@ app.use(cors(config[env].corsOptions));
 app.use(express.json());
 
 app.use("/api/admin", verifyApiKeyGet); // authentication for admin
-// app.use("/api/v1/web", verifyApiKeyGet); // authentication for client
 
 // Routes
 app.use("/api", router);
 
 // Home Page
 app.use("/", (req, res) => {
-  res.send("Welcome to Quiz Craft!");
+  res.send("Welcome to Api!");
 });
 
 // Error Middleware
