@@ -23,7 +23,7 @@ app.use("/api", router);
 
 // Home Page
 app.use("/", (req, res) => {
-  res.send("Welcome to Api!");
+  res.send("Hello World");
 });
 
 // Error Middleware
