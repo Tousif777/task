@@ -1,5 +1,6 @@
 const sendVerificationEmail = require("../middleware/sendEmailVerification");
 const User = require("../models/User");
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const {
   exclude,
   generateSignature,
@@ -11,7 +12,7 @@ const {
   checkOptValidity,
   checkTimeValidity,
   capitalizeFirstLetter,
-} = require("../helpers");
+} = require("../helpers"); 0
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -33,34 +34,32 @@ const createUser = async (userInputs) => {
       // Case 2: User exists, email verified, and email provider
       if (
         existingUser.email_verified === 1 &&
-        existingUser.provider === "email" &&
-        provider === "email"
+        existingUser.provider === 'email' &&
+        provider === 'email'
       ) {
-        return { status: false, message: "This email already exists!" };
+        return { status: false, message: 'This email already exists!' };
       }
 
       // Case 3: User exists, email verified, different provider (prevent manual registration)
       if (
         existingUser.email_verified === 1 &&
-        existingUser.provider !== "email" &&
-        provider === "email"
+        existingUser.provider !== 'email' &&
+        provider === 'email'
       ) {
         return {
           status: false,
-          message: `Please Try, Sign Up with ${capitalizeFirstLetter(
-            existingUser.provider
-          )}!`,
+          message: `Please Try, Sign Up with ${capitalizeFirstLetter(existingUser.provider)}!`,
         };
       }
     }
 
-    const salt = await generateSalt();
-    const hashedPassword = await generatePassword(password, salt);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Create a new user if not exists
     let newUser = existingUser;
 
     if (!newUser) {
-      // Create a new user if not exists
       newUser = new User({
         name,
         email,
@@ -68,14 +67,25 @@ const createUser = async (userInputs) => {
         image,
         password: hashedPassword,
         salt,
-        email_verified: provider === "email" ? 0 : 1,
+        email_verified: provider === 'email' ? 0 : 1,
         status: 1,
       });
 
       await newUser.save();
+
+      // Create a customer in Stripe
+      const stripeCustomer = await stripe.customers.create({
+        email: newUser.email,
+        name: newUser.name,
+        // Add more customer details as needed
+      });
+
+      // Save the Stripe customer ID in your MongoDB user model
+      newUser.stripeCustomerId = stripeCustomer.id;
+      await newUser.save();
     }
 
-    if (provider === "email") {
+    if (provider === 'email') {
       // Case 4: User is registered with email provider
       const otp = generateVerificationCode(6);
       const hashedOtp = await bcrypt.hash(otp, 10);
@@ -94,7 +104,7 @@ const createUser = async (userInputs) => {
       return {
         status: true,
         data: { accessToken },
-        message: "OTP sent successfully!",
+        message: 'OTP sent successfully!',
       };
     }
 
@@ -116,20 +126,20 @@ const createUser = async (userInputs) => {
     );
 
     const user = exclude(newUser.toObject(), [
-      "_id",
-      "__v",
-      "password",
-      "salt",
-      "verify_code",
-      "provider",
-      "forget_code",
-      "createdAt",
-      "updatedAt",
+      '_id',
+      '__v',
+      'password',
+      'salt',
+      'verify_code',
+      'provider',
+      'forget_code',
+      'createdAt',
+      'updatedAt',
     ]);
 
     return {
       status: true,
-      message: "Login successfully!",
+      message: 'Login successfully!',
       data: {
         accessToken,
         refreshToken,
@@ -138,11 +148,11 @@ const createUser = async (userInputs) => {
       },
     };
   } catch (error) {
-    console.error("Error", error);
+    console.error('Error', error);
     if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
-      throw new Error("Email is already exist!");
+      throw new Error('Email is already exist!');
     }
-    throw new Error("Failed to create user!");
+    throw new Error('Failed to create user!');
   }
 };
 

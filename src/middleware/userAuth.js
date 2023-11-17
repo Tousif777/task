@@ -3,23 +3,12 @@ const { validateSignature } = require("../helpers");
 const userAuth = async (req, res, next) => {
   const isAuthorized = await validateSignature(req);
 
-  console.log("IsAuthorized", isAuthorized);
-
   if (isAuthorized) {
     return next();
   }
   return res
     .status(401)
     .json({ message: "Unauthorized: Please log in first!" });
-};
-
-const userAuthorization = (req, res, next) => {
-  if (["superAdmin", "admin", "subAdmin"].includes(req.user.admin_type)) {
-    return next();
-  }
-  return res
-    .status(403)
-    .json({ message: "Your credentials are not authorized" });
 };
 
 const verifyApiKey = async (req, res, next) => {
@@ -48,7 +37,6 @@ const verifyApiKeyGet = (req, res, next) => {
 
 module.exports = {
   userAuth,
-  userAuthorization,
   verifyApiKey,
   verifyApiKeyGet,
 };
