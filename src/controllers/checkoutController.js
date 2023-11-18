@@ -50,6 +50,7 @@ const createCheckoutLink = async (req, res) => {
             customerId = customer.data[0].id;
         }
 
+
         // Create a new Checkout Session with customer information
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -59,7 +60,7 @@ const createCheckoutLink = async (req, res) => {
                     quantity: 1,
                 },
             ],
-            mode: 'subscription', // Use 'payment' for one-time purchases
+            mode: 'subscription' , // Use 'payment' for one-time purchases, 'subscription' for renewals
             success_url: 'https://yourwebsite.com/success',
             cancel_url: 'https://yourwebsite.com/cancel',
             customer: customerId, // Pass customer ID to pre-fill saved card information
@@ -68,14 +69,16 @@ const createCheckoutLink = async (req, res) => {
         // Retrieve the checkout session URL
         const checkoutLink = session.url;
 
-        // Send the checkout session link back to the client
-        res.json({ checkoutLink });
+        // Send the checkout session link back to the client with a message
+        res.json({ status: 'success', message: 'Checkout session created successfully', checkoutLink });
+
     } catch (error) {
         console.error('Error creating checkout session:', error.message);
         res.status(500).json({ error: 'Error creating checkout session' });
     }
 };
 
+
 module.exports = {
-    createCheckoutLink,
+    createCheckoutLink
 };

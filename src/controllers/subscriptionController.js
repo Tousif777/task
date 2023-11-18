@@ -44,7 +44,7 @@ const getSubscriptions = async (req, res) => {
             customer: customerId,
         });
 
-        res.json({ subscriptions: subscriptions.data });
+        res.json({ message: "Subscriptions list generated successfully", subscriptions: subscriptions.data });
     } catch (error) {
         console.error('Error getting subscriptions:', error.message);
         res.status(500).json({ error: 'Error getting subscriptions' });
@@ -92,8 +92,11 @@ const cancelSubscription = async (req, res) => {
                 return res.status(400).json({ status: false, message: 'Subscription ID to cancel is missing in the request body' });
             }
 
-            // Check if the provided subscription ID is associated with the customer
-            if (subscriptions.data.some(subscription => subscription.id === subscriptionIdToCancel)) {
+            // Find the subscription in the customer's subscriptions
+            const subscriptionToCancel = subscriptions.data.find(subscription => subscription.id === subscriptionIdToCancel);
+
+            if (subscriptionToCancel) {
+                // Cancel the subscription
                 await stripe.subscriptions.cancel(subscriptionIdToCancel);
                 res.json({ status: true, message: 'Subscription canceled successfully' });
             } else {
@@ -108,7 +111,48 @@ const cancelSubscription = async (req, res) => {
     }
 };
 
+const getPaymentHistory = async (req, res) => {
+    try {
+        // Get the access token from the request header
+        const accessToken = req.headers.token;
+
+        // Decode the access token to get user information
+        const decodedToken = decodeAccessToken(accessToken);
+
+        if (!decodedToken) {
+            return res.status(401).json({ status: false, message: 'Unauthorized' });
+        }
+
+        // Retrieve the customer from Stripe using the user's email
+        const userMail = decodedToken.email;
+
+        // Retrieve the customer ID using the email address
+        const customer = await stripe.customers.list({
+            email: userMail,
+            limit: 1,
+        });
+
+        if (customer.data.length === 0) {
+            return res.status(404).json({ status: false, message: 'Customer not found' });
+        }
+
+        const customerId = customer.data[0].id;
+
+        // Retrieve all payment intents of the customer
+        const paymentIntents = await stripe.paymentIntents.list({
+            customer: customerId,
+        });
+
+        res.json({ message: 'Payment history retrieved successfully', result: paymentIntents.data });
+    } catch (error) {
+        console.error('Error getting payment history:', error.message);
+        res.status(500).json({ error: 'Error getting payment history' });
+    }
+};
+
+
 module.exports = {
     getSubscriptions,
     cancelSubscription,
+    getPaymentHistory
 };
